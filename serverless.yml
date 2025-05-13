@@ -1,0 +1,148 @@
+service: brd
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    DB_HOST: ${ssm:/brd/db-host}
+    DB_NAME: ${ssm:/brd/db-name}
+    DB_USER: ${ssm:/brd/db-user}
+    DB_PASSWORD: ${ssm:/brd/db-password}
+    S3_BUCKET: ${self:custom.photoBucket}
+    COGNITO_USER_POOL_ID: ${self:custom.userPoolId}
+    COGNITO_CLIENT_ID: ${self:custom.userPoolClientId}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - ssm:GetParameter
+        - ssm:GetParameters
+      Resource: 
+        - arn:aws:ssm:${self:provider.region}:${self:provider.accountId}:parameter/brd/*
+    - Effect: Allow
+      Action:
+        - rds:CreateDBSnapshot
+        - rds:DescribeDBSnapshots
+      Resource: 
+        - arn:aws:rds:${self:provider.region}:${self:provider.accountId}:db:*
+
+custom:
+  photoBucket: photos-${self:provider.stage}
+  userPoolId: ${ssm:/brd/cognito-user-pool-id}
+  userPoolClientId: ${ssm:/brd/cognito-client-id}
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: true
+    exclude: ['aws-sdk']
+    target: 'node18'
+    platform: 'node'
+    concurrency: 10
+
+plugins:
+  - serverless-esbuild
+
+functions:
+  uploadPhoto:
+    handler: src/functions/photos/create.handler
+    events:
+      - http:
+          path: /photos
+          method: post
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ApiGatewayAuthorizer
+    environment:
+      UPLOAD_BUCKET: ${self:custom.photoBucket}
+
+  listPhotos:
+    handler: src/functions/photos/list.handler
+    events:
+      - http:
+          path: /photos
+          method: get
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ApiGatewayAuthorizer
+
+  deletePhoto:
+    handler: src/functions/photos/delete.handler
+    events:
+      - http:
+          path: /photos/{id}
+          method: delete
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ApiGatewayAuthorizer
+
+  migrate:
+    handler: src/functions/database/migrate.handler
+    environment:
+      NODE_ENV: ${self:provider.stage}
+
+  backup:
+    handler: src/functions/database/backup.handler
+    environment:
+      NODE_ENV: ${self:provider.stage}
+
+resources:
+  Resources:
+    PhotoBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.photoBucket}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders: ['*']
+              AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+              AllowedOrigins: ['*']
+              MaxAge: 3000
+
+    ApiGatewayAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: cognito-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId: !Ref ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${self:custom.userPoolId}
+
+    MigrationErrorAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-migration-error-${self:provider.stage}
+        MetricName: Errors
+        Namespace: AWS/Lambda
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 0
+        ComparisonOperator: GreaterThanThreshold
+        Dimensions:
+          - Name: FunctionName
+            Value: ${self:service}-migrate-${self:provider.stage}
+        AlarmActions:
+          - !Ref AlertsTopic
+
+    DeploymentErrorAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-deployment-error-${self:provider.stage}
+        MetricName: Errors
+        Namespace: AWS/Lambda
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 0
+        ComparisonOperator: GreaterThanThreshold
+        Dimensions:
+          - Name: FunctionName
+            Value: ${self:service}-deploy-${self:provider.stage}
+        AlarmActions:
+          - !Ref AlertsTopic
+
+    AlertsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-alerts-${self:provider.stage} 

@@ -1,0 +1,56 @@
+{
+  "Comment": "Database and Lambda Deployment Workflow",
+  "StartAt": "BackupDatabase",
+  "States": {
+    "BackupDatabase": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-backup-${self:provider.stage}",
+      "Next": "RunMigrations"
+    },
+    "RunMigrations": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-migrate-${self:provider.stage}",
+      "Parameters": {
+        "direction": "up"
+      },
+      "Next": "DeployLambda",
+      "Catch": [{
+        "ErrorEquals": ["States.ALL"],
+        "Next": "RollbackMigration"
+      }]
+    },
+    "DeployLambda": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-deploy-${self:provider.stage}",
+      "Next": "VerifyDeployment",
+      "Catch": [{
+        "ErrorEquals": ["States.ALL"],
+        "Next": "RollbackDeployment"
+      }]
+    },
+    "VerifyDeployment": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-verify-${self:provider.stage}",
+      "Next": "Success"
+    },
+    "RollbackMigration": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-migrate-${self:provider.stage}",
+      "Parameters": {
+        "direction": "down"
+      },
+      "Next": "Failure"
+    },
+    "RollbackDeployment": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-rollback-${self:provider.stage}",
+      "Next": "Failure"
+    },
+    "Success": {
+      "Type": "Succeed"
+    },
+    "Failure": {
+      "Type": "Fail"
+    }
+  }
+} 

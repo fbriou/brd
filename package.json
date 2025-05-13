@@ -1,0 +1,40 @@
+{
+  "name": "brd",
+  "version": "1.0.0",
+  "description": "A serverless photo management application",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "type-check": "tsc --noEmit",
+    "migrate": "node-pg-migrate",
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down",
+    "migrate:create": "node-pg-migrate create"
+  },
+  "dependencies": {
+    "@middy/core": "^4.5.0",
+    "@middy/http-cors": "^4.5.0",
+    "@middy/http-error-handler": "^4.5.0",
+    "@middy/http-json-body-parser": "^4.5.0",
+    "aws-sdk": "^2.1531.0",
+    "http-errors": "^2.0.0",
+    "node-pg-migrate": "^7.9.1",
+    "pg": "^8.11.3",
+    "sharp": "^0.33.2",
+    "slonik": "^32.0.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130",
+    "@types/http-errors": "^2.0.4",
+    "@types/node": "^20.11.16",
+    "@types/pg": "^8.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.56.0",
+    "serverless": "^3.38.0",
+    "serverless-esbuild": "^1.50.0",
+    "typescript": "^5.3.3"
+  }
+}
