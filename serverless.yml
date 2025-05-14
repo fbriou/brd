@@ -43,6 +43,14 @@ plugins:
   - serverless-esbuild
 
 functions:
+  health:
+    handler: src/functions/test/health.health
+    events:
+      - http:
+          path: /health
+          method: get
+          cors: true
+
   uploadPhoto:
     handler: src/functions/photos/create.handler
     events:

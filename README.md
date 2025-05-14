@@ -10,6 +10,9 @@ A serverless application for managing photos using AWS Lambda, S3, RDS, and Cogn
 - Database migrations and backups
 - Automated deployment pipeline
 - Error monitoring and alerts
+- Image processing with Sharp
+- TypeScript support
+- ESLint and TypeScript type checking
 
 ## Prerequisites
 
@@ -17,6 +20,20 @@ A serverless application for managing photos using AWS Lambda, S3, RDS, and Cogn
 - AWS CLI configured with appropriate credentials
 - PostgreSQL database (RDS)
 - AWS Cognito User Pool
+
+## Project Structure
+
+```
+.
+├── src/                    # Source code
+├── migrations/            # Database migrations
+├── serverless.yml        # Serverless Framework configuration
+├── buildspec.yml         # AWS CodeBuild configuration
+├── deployment-workflow.json # Step Functions workflow
+├── migration.config.js   # Database migration configuration
+├── tsconfig.json         # TypeScript configuration
+└── package.json          # Project dependencies and scripts
+```
 
 ## Environment Setup
 
@@ -38,6 +55,19 @@ A serverless application for managing photos using AWS Lambda, S3, RDS, and Cogn
    aws ssm put-parameter --name "/brd/cognito-user-pool-id" --value "your-user-pool-id" --type String
    aws ssm put-parameter --name "/brd/cognito-client-id" --value "your-client-id" --type String
    ```
+
+## Development
+
+```bash
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+
+# Testing
+npm run test
+```
 
 ## Database Management
 
@@ -86,15 +116,6 @@ The application uses AWS CodePipeline and Step Functions for automated deploymen
    - Verifies the deployment
    - Rolls back on failure
 
-## Monitoring
-
-The application includes CloudWatch alarms for:
-- Migration errors
-- Deployment errors
-- Lambda function errors
-
-Alerts are sent to an SNS topic for notification.
-
 ## API Endpoints
 
 All endpoints require Cognito authentication:
@@ -103,18 +124,20 @@ All endpoints require Cognito authentication:
 - `GET /photos` - List photos
 - `DELETE /photos/{id}` - Delete a photo
 
-## Development
+## Dependencies
 
-```bash
-# Type checking
-npm run type-check
+### Main Dependencies
+- `@middy/core` and middleware - Lambda middleware framework
+- `aws-sdk` - AWS SDK for Node.js
+- `node-pg-migrate` - Database migration tool
+- `pg` and `slonik` - PostgreSQL client and query builder
+- `sharp` - Image processing library
 
-# Linting
-npm run lint
-
-# Testing
-npm run test
-```
+### Development Dependencies
+- TypeScript and type definitions
+- ESLint and TypeScript ESLint
+- Serverless Framework and plugins
+- Jest for testing
 
 ## Security
 
@@ -122,6 +145,15 @@ npm run test
 - Database credentials are stored in AWS SSM Parameter Store
 - S3 bucket has CORS configuration for secure access
 - IAM roles follow the principle of least privilege
+
+## Monitoring
+
+The application includes CloudWatch alarms for:
+- Migration errors
+- Deployment errors
+- Lambda function errors
+
+Alerts are sent to an SNS topic for notification.
 
 ## License
 
