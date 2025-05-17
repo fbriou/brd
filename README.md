@@ -21,16 +21,40 @@ The goal of this project is to create the backend for a Google Drive-like applic
    # Group name: brd-deployers
    ```
 
-4. Attach required policies to the group:
-   - AmazonCognitoPowerUser
-   - AmazonRDSFullAccess
-   - AmazonS3FullAccess
-   - AWSLambdaFullAccess
-   - IAMFullAccess
-   - CloudWatchFullAccess
-   - AmazonSSMFullAccess
+4. **Recommended:** Instead of attaching many managed policies, create and attach a single custom policy with all required permissions for Serverless and Terraform deployments. Use the following JSON:
 
-5. Create a custom policy for SSM access:
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": [
+           "apigateway:*",
+           "cloudformation:*",
+           "cognito-idp:*",
+           "dynamodb:*",
+           "ec2:Describe*",
+           "iam:*",
+           "lambda:*",
+           "logs:*",
+           "rds:*",
+           "s3:*",
+           "sns:*",
+           "ssm:*",
+           "cloudwatch:*"
+         ],
+         "Resource": "*"
+       }
+     ]
+   }
+   ```
+
+   - Go to IAM > Policies > Create policy > JSON tab, paste the above, and save as e.g. `ServerlessFullDeploymentPolicy`.
+   - Attach this policy to your deployment group.
+   - Remove redundant managed policies to stay under AWS's 10-policy-per-group limit.
+
+5. Create a custom policy for SSM access (optional if using the above):
    ```json
    {
      "Version": "2012-10-17",
@@ -115,7 +139,89 @@ export AWS_PROFILE=dev  # or prod
 
 Any time the project is updated, there is a Database and Lambda Deployment Workflow. The system includes a migration system to manage the database properly, ensuring data consistency across deployments.
 
+**Deployment order:**
+1. **Deploy the application first:**
+   ```bash
+   serverless deploy --stage dev
+   # or
+   serverless deploy --stage prod
+   ```
+2. **Then run the migration function:**
+   ```bash
+   serverless invoke --function migrate --stage dev
+   # or
+   serverless invoke --function migrate --stage prod
+   ```
+
+**Troubleshooting:**
+- If you see errors like `Could not resolve "<package-name>"` during deployment, make sure to install the missing package:
+  ```bash
+  npm install <package-name>
+  ```
+  For example, to fix a missing `lambda-multipart-parser` error:
+  ```bash
+  npm install lambda-multipart-parser
+  ```
+
 [View detailed deployment guide →](DEPLOYMENT.md)
+
+## S3 Bucket Setup (One-Time Manual Step)
+
+Before deploying the application, you must manually create the S3 bucket that will be used for photo storage. This avoids deployment errors due to bucket name conflicts and ensures the bucket is not managed by CloudFormation.
+
+### Option 1: Using the AWS CLI
+
+1. **Create the S3 bucket (replace the bucket name and region as needed):**
+   ```bash
+   aws s3api create-bucket --bucket photos-dev --region us-east-1
+   ```
+   > For regions other than us-east-1, add:
+   > ```bash
+   > --create-bucket-configuration LocationConstraint=us-east-1
+   > ```
+
+2. **(Optional) Set CORS configuration for browser uploads:**
+   Create a file called `cors.json`:
+   ```json
+   [
+     {
+       "AllowedHeaders": ["*"],
+       "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+       "AllowedOrigins": ["*"],
+       "MaxAgeSeconds": 3000
+     }
+   ]
+   ```
+   Then run:
+   ```bash
+   aws s3api put-bucket-cors --bucket photos-dev --cors-configuration file://cors.json
+   ```
+
+### Option 2: Using the AWS Console
+
+1. **Go to the [AWS S3 Console](https://s3.console.aws.amazon.com/s3/home)**
+2. Click **Create bucket**
+3. Enter a unique bucket name (e.g., `photos-dev`) and select your region
+4. Leave the rest of the settings as default (or adjust as needed)
+5. Click **Create bucket**
+6. (Optional) Set CORS configuration:
+   - Click on your bucket name
+   - Go to the **Permissions** tab
+   - Scroll down to **Cross-origin resource sharing (CORS)**
+   - Click **Edit** and paste the following:
+     ```json
+     [
+       {
+         "AllowedHeaders": ["*"],
+         "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+         "AllowedOrigins": ["*"],
+         "MaxAgeSeconds": 3000
+       }
+     ]
+     ```
+   - Click **Save changes**
+
+Continue with the rest of the deployment as described below.
 
 ## Infrastructure Deployment
 

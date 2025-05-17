@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"cognito","Source":"../../modules/cognito","Dir":"../../modules/cognito"},{"Key":"rds","Source":"../../modules/rds","Dir":"../../modules/rds"},{"Key":"ssm","Source":"../../modules/ssm","Dir":"../../modules/ssm"}]}

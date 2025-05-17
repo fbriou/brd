@@ -4,11 +4,12 @@ provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
+  stage: ${opt:stage, 'dev'}
   environment:
-    DB_HOST: ${ssm:/brd/db-host}
-    DB_NAME: ${ssm:/brd/db-name}
-    DB_USER: ${ssm:/brd/db-user}
-    DB_PASSWORD: ${ssm:/brd/db-password}
+    DB_HOST: ${ssm:/brd/${self:provider.stage}/db-host}
+    DB_NAME: ${ssm:/brd/${self:provider.stage}/db-name}
+    DB_USER: ${ssm:/brd/${self:provider.stage}/db-user}
+    DB_PASSWORD: ${ssm:/brd/${self:provider.stage}/db-password}
     S3_BUCKET: ${self:custom.photoBucket}
     COGNITO_USER_POOL_ID: ${self:custom.userPoolId}
     COGNITO_CLIENT_ID: ${self:custom.userPoolClientId}
@@ -18,18 +19,18 @@ provider:
         - ssm:GetParameter
         - ssm:GetParameters
       Resource: 
-        - arn:aws:ssm:${self:provider.region}:${self:provider.accountId}:parameter/brd/*
+        - arn:aws:ssm:${self:provider.region}:*:parameter/brd/*
     - Effect: Allow
       Action:
         - rds:CreateDBSnapshot
         - rds:DescribeDBSnapshots
       Resource: 
-        - arn:aws:rds:${self:provider.region}:${self:provider.accountId}:db:*
+        - arn:aws:rds:${self:provider.region}:*:db:*
 
 custom:
   photoBucket: photos-${self:provider.stage}
-  userPoolId: ${ssm:/brd/cognito-user-pool-id}
-  userPoolClientId: ${ssm:/brd/cognito-client-id}
+  userPoolId: ${ssm:/brd/${self:provider.stage}/cognito-user-pool-id}
+  userPoolClientId: ${ssm:/brd/${self:provider.stage}/cognito-client-id}
   esbuild:
     bundle: true
     minify: true
@@ -95,17 +96,6 @@ functions:
 
 resources:
   Resources:
-    PhotoBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:custom.photoBucket}
-        CorsConfiguration:
-          CorsRules:
-            - AllowedHeaders: ['*']
-              AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
-              AllowedOrigins: ['*']
-              MaxAge: 3000
-
     ApiGatewayAuthorizer:
       Type: AWS::ApiGateway::Authorizer
       Properties:

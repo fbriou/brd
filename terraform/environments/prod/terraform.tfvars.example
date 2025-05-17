@@ -1,4 +1,4 @@
 environment  = "prod"
 db_name      = "brd_prod"
-db_username  = "admin"
+db_username  = "brdadmin"
 db_password  = "your-prod-password"  # Replace with a secure password 

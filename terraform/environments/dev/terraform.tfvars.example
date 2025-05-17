@@ -1,4 +1,4 @@
 environment  = "dev"
 db_name      = "brd_dev"
-db_username  = "admin"
+db_username  = "brdadmin"
 db_password  = "your-dev-password"  # Replace with a secure password 

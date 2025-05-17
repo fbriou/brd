@@ -20,6 +20,7 @@
     "@middy/http-json-body-parser": "^4.5.0",
     "aws-sdk": "^2.1531.0",
     "http-errors": "^2.0.0",
+    "lambda-multipart-parser": "^1.0.1",
     "node-pg-migrate": "^7.9.1",
     "pg": "^8.11.3",
     "sharp": "^0.33.2",

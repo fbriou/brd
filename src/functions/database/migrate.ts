@@ -1,5 +1,5 @@
 import { createPool } from 'slonik';
-import { migrate } from 'node-pg-migrate';
+import migrate from 'node-pg-migrate';
 import { SSM } from 'aws-sdk';
 
 const ssm = new SSM();

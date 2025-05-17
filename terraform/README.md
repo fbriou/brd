@@ -28,9 +28,7 @@ terraform/
 ## Prerequisites
 
 1. **AWS CLI Configuration**
-   ```bash
-   aws configure
-   ```
+   - Please follow the instructions in the [main README](../../README.md#aws-setup) to configure your AWS CLI and credentials.
 
 2. **Terraform Installation**
    ```bash
@@ -65,6 +63,9 @@ terraform/
    terraform apply
    ```
 
+5. **Deploy the Application**
+   - Once infrastructure is ready, follow the [main README](../../README.md#application-deployment) to deploy the application using the Serverless Framework.
+
 ### Production Environment
 
 1. **Initialize Terraform**
@@ -90,6 +91,9 @@ terraform/
    ```bash
    terraform apply
    ```
+
+5. **Deploy the Application**
+   - Once infrastructure is ready, follow the [main README](../../README.md#application-deployment) to deploy the application using the Serverless Framework.
 
 ## Infrastructure Components
 
