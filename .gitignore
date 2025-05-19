@@ -41,12 +41,6 @@ logs/
 # Optional REPL history
 .node_repl_history
 
-# Ignore Terraform variable files
-terraform.tfvars
-**/terraform.tfvars
-
-# Ignore Terraform local state and provider binaries
-.terraform/
 # Terraform files
 **/.terraform/*
 *.tfstate
@@ -60,3 +54,6 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+
+# Serverless files
+.serverless/*
