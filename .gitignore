@@ -44,3 +44,19 @@ logs/
 # Ignore Terraform variable files
 terraform.tfvars
 **/terraform.tfvars
+
+# Ignore Terraform local state and provider binaries
+.terraform/
+# Terraform files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
