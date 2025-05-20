@@ -35,7 +35,6 @@ custom:
     bundle: true
     minify: true
     sourcemap: true
-    exclude: ['aws-sdk']
     target: 'node18'
     platform: 'node'
     concurrency: 10
@@ -143,4 +142,11 @@ resources:
     AlertsTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: ${self:service}-alerts-${self:provider.stage} 
+        TopicName: ${self:service}-alerts-${self:provider.stage}
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!src/**'
+    - 'migrations/**'
+    - 'src/functions/**' 

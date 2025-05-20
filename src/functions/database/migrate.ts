@@ -1,20 +1,23 @@
-import { createPool } from 'slonik';
 import migrate from 'node-pg-migrate';
-import { SSM } from 'aws-sdk';
+import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
 
-const ssm = new SSM();
+const ssmClient = new SSMClient();
 
 export const handler = async (event: any) => {
   try {
+    const stage = process.env.STAGE || 'dev';
     // Get database credentials from SSM
     const [host, name, user, password] = await Promise.all([
-      ssm.getParameter({ Name: '/brd/db-host' }).promise(),
-      ssm.getParameter({ Name: '/brd/db-name' }).promise(),
-      ssm.getParameter({ Name: '/brd/db-user' }).promise(),
-      ssm.getParameter({ Name: '/brd/db-password', WithDecryption: true }).promise(),
+      ssmClient.send(new GetParameterCommand({ Name: `/brd/${stage}/db-host` })),
+      ssmClient.send(new GetParameterCommand({ Name: `/brd/${stage}/db-name` })),
+      ssmClient.send(new GetParameterCommand({ Name: `/brd/${stage}/db-user` })),
+      ssmClient.send(new GetParameterCommand({ Name: `/brd/${stage}/db-password`, WithDecryption: true })),
     ]);
 
-    const databaseUrl = `postgres://${user.Parameter?.Value}:${password.Parameter?.Value}@${host.Parameter?.Value}:5432/${name.Parameter?.Value}`;
+    // Extract host without port from the endpoint
+    const hostWithoutPort = host.Parameter?.Value?.split(':')[0];
+    const encodedPassword = encodeURIComponent(password.Parameter?.Value || '');
+    const databaseUrl = `postgres://${user.Parameter?.Value}:${encodedPassword}@${hostWithoutPort}:5432/${name.Parameter?.Value}`;
 
     // Run migrations
     await migrate({

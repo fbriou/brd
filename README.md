@@ -34,7 +34,7 @@ The goal of this project is to create the backend for a Google Drive-like applic
            "cloudformation:*",
            "cognito-idp:*",
            "dynamodb:*",
-           "ec2:Describe*",
+           "ec2:*",
            "iam:*",
            "lambda:*",
            "logs:*",
