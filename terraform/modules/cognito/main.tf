@@ -16,7 +16,16 @@ resource "aws_cognito_user_pool" "main" {
     mutable            = true
   }
 
-  auto_verified_attributes = ["email"]
+  # Disable email verification
+  auto_verified_attributes = []
+  admin_create_user_config {
+    allow_admin_create_user_only = true
+  }
+
+  # Configure email settings (optional, for password reset)
+  email_configuration {
+    email_sending_account = "COGNITO_DEFAULT"
+  }
 
   tags = {
     Environment = var.environment

@@ -13,6 +13,127 @@ All endpoints (except `/health`) require AWS Cognito authentication. Clients mus
 Authorization: Bearer <JWT_TOKEN>
 ```
 
+### Authentication Endpoints
+
+#### 1. Sign Up
+
+- **POST /auth/signup**
+- **Description:** Register a new user account
+- **Request:**
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "SecurePassword123!",
+    "name": "John Doe"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "accessToken": "eyJraWQiOiJ...",
+    "idToken": "eyJraWQiOiJ...",
+    "refreshToken": "eyJraWQiOiJ...",
+    "expiresIn": 3600,
+    "userId": "user-uuid"
+  }
+  ```
+- **Error Codes:**
+  - 400: Invalid input data
+  - 409: User already exists
+  - 500: Registration failed
+
+#### 2. Sign In
+
+- **POST /auth/signin**
+- **Description:** Authenticate user and get JWT tokens
+- **Request:**
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "SecurePassword123!"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "accessToken": "eyJraWQiOiJ...",
+    "idToken": "eyJraWQiOiJ...",
+    "refreshToken": "eyJraWQiOiJ...",
+    "expiresIn": 3600
+  }
+  ```
+- **Error Codes:**
+  - 400: Invalid credentials
+  - 401: Unauthorized
+  - 500: Authentication failed
+
+#### 3. Refresh Token
+
+- **POST /auth/refresh**
+- **Description:** Get new access token using refresh token
+- **Request:**
+  ```json
+  {
+    "refreshToken": "eyJraWQiOiJ..."
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "accessToken": "eyJraWQiOiJ...",
+    "idToken": "eyJraWQiOiJ...",
+    "expiresIn": 3600
+  }
+  ```
+- **Error Codes:**
+  - 400: Invalid refresh token
+  - 401: Unauthorized
+  - 500: Token refresh failed
+
+#### 4. Forgot Password
+
+- **POST /auth/forgot-password**
+- **Description:** Initiate password reset process
+- **Request:**
+  ```json
+  {
+    "email": "user@example.com"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "message": "Password reset code sent to email"
+  }
+  ```
+- **Error Codes:**
+  - 400: Invalid email
+  - 404: User not found
+  - 500: Password reset initiation failed
+
+#### 5. Reset Password
+
+- **POST /auth/reset-password**
+- **Description:** Reset password with verification code
+- **Request:**
+  ```json
+  {
+    "email": "user@example.com",
+    "code": "123456",
+    "newPassword": "NewSecurePassword123!"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "message": "Password reset successful"
+  }
+  ```
+- **Error Codes:**
+  - 400: Invalid code or password
+  - 404: User not found
+  - 500: Password reset failed
+
 ---
 
 ## Endpoints

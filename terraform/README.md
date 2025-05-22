@@ -278,101 +278,93 @@ Before deploying the application, you must manually create the S3 bucket that wi
 
 ### AWS Cognito
 - User Pool for authentication
+  - Email-based signup and signin
+  - Admin-only user creation
+  - Password policies for security
+  - JWT token-based authentication
 - App Client for API access
+  - OAuth 2.0 flows
+  - Token-based authentication
+  - Refresh token rotation
 - User groups for role-based access
+  - Admin group
+  - User group
+  - Custom permissions per group
 
-### RDS Database
-- PostgreSQL instance
-- Automated backups
-- Multi-AZ in production
-- Security groups for access control
+#### Creating the First Admin User
 
-### S3 Bucket
-- Photo storage
-- CORS configuration
-- Lifecycle policies
+After deploying the infrastructure, create the first admin user using the provided setup script:
 
-### SSM Parameters
-- Database credentials
-- Cognito configuration
-- Application settings
+```bash
+# Basic usage (uses default values)
+./setup-admin.sh
 
-## Environment Differences
+# Custom configuration
+./setup-admin.sh \
+  --environment dev \
+  --email your-admin@example.com \
+  --password YourSecurePassword123!
+```
 
-### Development
-- RDS: t3.micro instance
-- Storage: 20GB
-- Multi-AZ: Disabled
-- Backup Retention: 1 day
+The script will:
+1. Find the correct User Pool ID for your environment
+2. Create the admin user
+3. Set up the permanent password
+4. Create the admin group if it doesn't exist
+5. Add the user to the admin group
 
-### Production
-- RDS: t3.small instance
-- Storage: 50GB
-- Multi-AZ: Enabled
-- Backup Retention: 7 days
+After running the script, you'll have a fully configured admin user that can:
+- Sign in to the application
+- Create additional users through the API
+- Manage user permissions
 
-## State Management
+### Getting API Information
 
-Terraform state is stored in S3 with DynamoDB for state locking:
-- Bucket: `brd-terraform-state-<environment>`
-- DynamoDB table: `brd-terraform-locks-<environment>`
+To get the current API endpoints and their URLs, use the serverless info command:
 
-## Security
+```bash
+serverless info --stage dev
+```
 
-1. **IAM Roles**
-   - Least privilege principle
-   - Separate roles for different components
-   - Regular permission audits
+This will show you:
+- All available endpoints and their URLs
+- The current stage and region
+- All deployed functions
+- Any deprecation warnings
 
-2. **Network Security**
-   - VPC configuration
-   - Security groups
-   - Private subnets for RDS
+The base URL for the API will be in the format: `https://<api-id>.execute-api.<region>.amazonaws.com/<stage>`
 
-3. **Secrets Management**
-   - SSM Parameter Store for sensitive data
-   - KMS encryption for parameters
-   - Regular key rotation
-
-## Maintenance
-
-1. **Regular Tasks**
-   - Review and update security groups
-   - Monitor RDS performance
-   - Check backup status
-   - Update Terraform modules
-
-2. **Troubleshooting**
+5. **Create Additional Users:**
+   After setting up the admin user, use the application's API to create new users:
    ```bash
-   # Check state lock
-   aws dynamodb describe-table --table-name brd-terraform-locks-<environment>
+   # First, get an admin token
+   curl -X POST https://<api-url>/auth/signin \
+     -H "Content-Type: application/json" \
+     -d '{"email": "admin@example.com", "password": "YourSecurePassword123!"}'
 
-   # Remove state lock if needed
-   aws dynamodb delete-item \
-     --table-name brd-terraform-locks-<environment> \
-     --key '{"LockID": {"S": "terraform/terraform.tfstate-md5"}}'
+   # Then create a new user using the admin token
+   curl -X POST https://<api-url>/auth/users \
+     -H "Authorization: Bearer <admin-token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "newuser@example.com",
+       "name": "New User",
+       "password": "SecurePassword123!"
+     }'
    ```
 
-## Best Practices
+### Getting API Information
 
-1. **Version Control**
-   - Always commit Terraform files
-   - Use meaningful commit messages
-   - Review changes before applying
+To get the current API endpoints and their URLs, use the serverless info command:
 
-2. **State Management**
-   - Never modify state manually
-   - Use state locking
-   - Regular state backups
+```bash
+serverless info --stage dev
+```
 
-3. **Security**
-   - Regular security audits
-   - Rotate credentials
-   - Monitor access logs
+This will show you:
+- All available endpoints and their URLs
+- The current stage and region
+- All deployed functions
+- Any deprecation warnings
 
-## Support
-
-For issues or questions:
-1. Check the troubleshooting guide
-2. Review Terraform documentation
-3. Open an issue in the repository 
+The base URL for the API will be in the format: `https://<api-id>.execute-api.<region>.amazonaws.com/<stage>` 
